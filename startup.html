@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TaskPro Solutions - Task Management</title>
+  <style>
+    body {
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f4;
+  margin: 0;
+  padding: 0;
+}
+
+header {
+  background-color: #4CAF50;
+  color: white;
+  padding: 20px;
+  text-align: center;
+}
+
+.logo {
+  height: 50px;
+}
+
+h1, h2, h3 {
+  margin: 10px 0;
+}
+
+#loginSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 50px;
+}
+
+input {
+  margin: 10px;
+  padding: 10px;
+  width: 250px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+button {
+  padding: 10px 20px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+button:hover {
+  background-color: #45a049;
+}
+
+.error-message {
+  color: red;
+  font-size: 12px;
+}
+
+.dashboard {
+  margin: 20px;
+  padding: 20px;
+  background-color: white;
+  border-radius: 5px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard h2, .dashboard h3 {
+  color: #333;
+}
+
+#adminDashboard, #employeeDashboard {
+  max-width: 800px;
+  margin: 20px auto;
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+li {
+  padding: 10px;
+  background-color: #ddd;
+  margin-bottom: 5px;
+  border-radius: 4px;
+}
+
+#employeeList li, #assignedTaskList li {
+  background-color: #e0e0e0;
+}
+
+#employeeDropdown, #employeeTask, #newTask {
+  margin-top: 10px;
+  padding: 10px;
+  width: 250px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+#addEmployeeBtn, #assignTaskBtn, #addTaskBtn {
+  margin-top: 10px;
+}
+
+.dashboard div {
+  margin-top: 30px;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #fafafa;
+}
+
+.dashboard div h3 {
+  margin-top: 0;
+  color: #4CAF50;
+}
+
+select {
+  padding: 10px;
+  width: 250px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin-top: 10px;
+}
+
+#logoutAdmin, #logoutEmployee {
+  background-color: #f44336;
+  margin-top: 20px;
+}
+
+#logoutAdmin:hover, #logoutEmployee:hover {
+  background-color: #e53935;
+}
+
+  </style>
+</head>
+<body>
+  <div id="app">
+    <header>
+      <img src="logo.png" alt="TaskPro Solutions Logo" class="logo">
+      <h1>Welcome to TaskPro Solutions</h1>
+    </header>
+
+    <!-- Login Section -->
+    <section id="loginSection">
+      <h2>Login</h2>
+      <input type="text" id="username" placeholder="Username">
+      <input type="password" id="password" placeholder="Password">
+      <button id="loginBtn">Login</button>
+      <p id="loginError" class="error-message"></p>
+    </section>
+
+    <!-- Admin Dashboard -->
+    <section id="adminDashboard" class="dashboard" style="display: none;">
+      <h2>Admin Dashboard</h2>
+      <button id="logoutAdmin">Logout</button>
+
+      <!-- Add Employee Section -->
+      <div>
+        <h3>Add Employee</h3>
+        <input type="text" id="employeeName" placeholder="Employee Name">
+        <input type="text" id="employeeUsername" placeholder="Employee Username">
+        <button id="addEmployeeBtn">Add Employee</button>
+        <ul id="employeeList"></ul>
+      </div>
+
+      <!-- Assign Tasks to Employee Section -->
+      <div>
+        <h3>Assign Tasks to Employees</h3>
+        <select id="employeeDropdown"></select>
+        <input type="text" id="employeeTask" placeholder="Task for Employee">
+        <button id="assignTaskBtn">Assign Task</button>
+        <ul id="assignedTaskList"></ul>
+      </div>
+    </section>
+
+    <!-- Employee Dashboard -->
+    <section id="employeeDashboard" class="dashboard" style="display: none;">
+      <h2>Employee Dashboard</h2>
+      <button id="logoutEmployee">Logout</button>
+      <div>
+        <h3>Your Tasks</h3>
+        <ul id="employeeTaskList"></ul>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // Mock data for simplicity
+const users = {
+  admin: { username: "admin", password: "admin123", role: "admin" },
+  employee: { username: "employee", password: "employee123", role: "employee" }
+};
+
+let employees = JSON.parse(localStorage.getItem("employees")) || [];
+let tasksForEmployees = JSON.parse(localStorage.getItem("tasksForEmployees")) || {};
+
+// Handle login logic
+document.getElementById("loginBtn").addEventListener("click", function() {
+  const username = document.getElementById("username").value;
+  const password = document.getElementById("password").value;
+  const loginError = document.getElementById("loginError");
+
+  // Validate credentials
+  if (users[username] && users[username].password === password) {
+    loginError.textContent = '';
+    if (users[username].role === "admin") {
+      showAdminDashboard();
+    } else if (users[username].role === "employee") {
+      showEmployeeDashboard(username);
+    }
+  } else {
+    loginError.textContent = "Invalid username or password.";
+  }
+});
+
+// Show admin dashboard
+function showAdminDashboard() {
+  document.getElementById("loginSection").style.display = "none";
+  document.getElementById("adminDashboard").style.display = "block";
+  loadEmployees();
+}
+
+// Show employee dashboard
+function showEmployeeDashboard(username) {
+  document.getElementById("loginSection").style.display = "none";
+  document.getElementById("employeeDashboard").style.display = "block";
+  loadEmployeeTasks(username);
+}
+
+// Logout functionality
+document.getElementById("logoutAdmin").addEventListener("click", function() {
+  document.getElementById("adminDashboard").style.display = "none";
+  document.getElementById("loginSection").style.display = "block";
+});
+
+document.getElementById("logoutEmployee").addEventListener("click", function() {
+  document.getElementById("employeeDashboard").style.display = "none";
+  document.getElementById("loginSection").style.display = "block";
+});
+
+// Add Employee
+document.getElementById("addEmployeeBtn").addEventListener("click", function() {
+  const employeeName = document.getElementById("employeeName").value;
+  const employeeUsername = document.getElementById("employeeUsername").value;
+  
+  if (employeeName && employeeUsername) {
+    employees.push({ name: employeeName, username: employeeUsername });
+    localStorage.setItem("employees", JSON.stringify(employees));
+    users[employeeUsername] = { username: employeeUsername, password: "password123", role: "employee" }; // Add employee user
+    loadEmployees();
+    document.getElementById("employeeName").value = '';
+    document.getElementById("employeeUsername").value = '';
+  }
+});
+
+function loadEmployees() {
+  const employeeList = document.getElementById("employeeList");
+  const employeeDropdown = document.getElementById("employeeDropdown");
+  employeeList.innerHTML = '';
+  employeeDropdown.innerHTML = '';
+
+  employees.forEach((employee, index) => {
+    const li = document.createElement("li");
+    li.textContent = `${employee.name} (${employee.username})`;
+    employeeList.appendChild(li);
+
+    const option = document.createElement("option");
+    option.value = employee.username;
+    option.textContent = employee.name;
+    employeeDropdown.appendChild(option);
+  });
+}
+
+// Assign Task to Employee
+document.getElementById("assignTaskBtn").addEventListener("click", function() {
+  const selectedEmployee = document.getElementById("employeeDropdown").value;
+  const employeeTask = document.getElementById("employeeTask").value;
+
+  if (selectedEmployee && employeeTask) {
+    if (!tasksForEmployees[selectedEmployee]) {
+      tasksForEmployees[selectedEmployee] = [];
+    }
+    tasksForEmployees[selectedEmployee].push(employeeTask);
+    localStorage.setItem("tasksForEmployees", JSON.stringify(tasksForEmployees));
+    loadAssignedTasks();
+    document.getElementById("employeeTask").value = '';
+  }
+});
+
+function loadAssignedTasks() {
+  const assignedTaskList = document.getElementById("assignedTaskList");
+  assignedTaskList.innerHTML = '';
+  const selectedEmployee = document.getElementById("employeeDropdown").value;
+
+  if (tasksForEmployees[selectedEmployee]) {
+    tasksForEmployees[selectedEmployee].forEach((task) => {
+      const li = document.createElement("li");
+      li.textContent = task;
+      assignedTaskList.appendChild(li);
+    });
+  }
+}
+
+// Load tasks for an employee
+function loadEmployeeTasks(username) {
+  const employeeTaskList = document.getElementById("employeeTaskList");
+  employeeTaskList.innerHTML = '';
+
+  if (tasksForEmployees[username]) {
+    tasksForEmployees[username].forEach((task) => {
+      const li = document.createElement("li");
+      li.textContent = task;
+      employeeTaskList.appendChild(li);
+    });
+  }
+}
+
+  </script>
+</body>
+</html>

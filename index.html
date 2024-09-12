@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TaskPro Solutions - Task Management</title>
+  <style>
+    body {
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f4;
+  margin: 0;
+  padding: 0;
+}
+
+header {
+  background-color: #4CAF50;
+  color: white;
+  padding: 10px 0;
+  text-align: center;
+}
+
+.logo {
+  height: 50px;
+}
+
+h1, h2, h3 {
+  margin: 10px 0;
+}
+
+#loginSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 20px;
+}
+
+input {
+  margin: 10px;
+  padding: 10px;
+  width: 200px;
+}
+
+button {
+  padding: 10px 20px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #45a049;
+}
+
+.dashboard {
+  margin: 20px;
+  padding: 10px;
+}
+
+.error-message {
+  color: red;
+  font-size: 12px;
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+li {
+  padding: 5px;
+  background-color: #ddd;
+  margin-bottom: 5px;
+}
+
+  </style>
+</head>
+<body>
+  <div id="app">
+    <header>
+      <img src="logo.png" alt="TaskPro Solutions Logo" class="logo">
+      <h1>Welcome to TaskPro Solutions</h1>
+    </header>
+
+    <!-- Login Section -->
+    <section id="loginSection">
+      <h2>Login</h2>
+      <input type="text" id="username" placeholder="Username">
+      <input type="password" id="password" placeholder="Password">
+      <button id="loginBtn">Login</button>
+      <p id="loginError" class="error-message"></p>
+    </section>
+
+    <!-- Admin Dashboard -->
+    <section id="adminDashboard" class="dashboard" style="display: none;">
+      <h2>Admin Dashboard</h2>
+      <button id="logoutAdmin">Logout</button>
+      <div>
+        <h3>Task Management</h3>
+        <input type="text" id="newTask" placeholder="New Task">
+        <button id="addTaskBtn">Add Task</button>
+        <ul id="taskList"></ul>
+      </div>
+    </section>
+
+    <!-- Employee Dashboard -->
+    <section id="employeeDashboard" class="dashboard" style="display: none;">
+      <h2>Employee Dashboard</h2>
+      <button id="logoutEmployee">Logout</button>
+      <div>
+        <h3>Your Tasks</h3>
+        <ul id="employeeTaskList"></ul>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // Mock data for simplicity
+const users = {
+  admin: { username: "admin", password: "admin123", role: "admin" },
+  employee: { username: "employee", password: "employee123", role: "employee" }
+};
+
+// Handle login logic
+document.getElementById("loginBtn").addEventListener("click", function() {
+  const username = document.getElementById("username").value;
+  const password = document.getElementById("password").value;
+  const loginError = document.getElementById("loginError");
+
+  // Validate credentials
+  if (users[username] && users[username].password === password) {
+    loginError.textContent = '';
+    if (users[username].role === "admin") {
+      showAdminDashboard();
+    } else if (users[username].role === "employee") {
+      showEmployeeDashboard();
+    }
+  } else {
+    loginError.textContent = "Invalid username or password.";
+  }
+});
+
+// Show admin dashboard
+function showAdminDashboard() {
+  document.getElementById("loginSection").style.display = "none";
+  document.getElementById("adminDashboard").style.display = "block";
+  loadTasks();
+}
+
+// Show employee dashboard
+function showEmployeeDashboard() {
+  document.getElementById("loginSection").style.display = "none";
+  document.getElementById("employeeDashboard").style.display = "block";
+  loadEmployeeTasks();
+}
+
+// Logout functionality
+document.getElementById("logoutAdmin").addEventListener("click", function() {
+  document.getElementById("adminDashboard").style.display = "none";
+  document.getElementById("loginSection").style.display = "block";
+});
+
+document.getElementById("logoutEmployee").addEventListener("click", function() {
+  document.getElementById("employeeDashboard").style.display = "none";
+  document.getElementById("loginSection").style.display = "block";
+});
+
+// Task management logic for admin
+document.getElementById("addTaskBtn").addEventListener("click", function() {
+  const task = document.getElementById("newTask").value;
+  if (task) {
+    let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+    tasks.push(task);
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+    loadTasks();
+    document.getElementById("newTask").value = '';
+  }
+});
+
+function loadTasks() {
+  const taskList = document.getElementById("taskList");
+  taskList.innerHTML = '';
+  const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+  tasks.forEach((task, index) => {
+    const li = document.createElement("li");
+    li.textContent = task;
+    taskList.appendChild(li);
+  });
+}
+
+function loadEmployeeTasks() {
+  const employeeTaskList = document.getElementById("employeeTaskList");
+  employeeTaskList.innerHTML = '';
+  const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+  tasks.forEach((task) => {
+    const li = document.createElement("li");
+    li.textContent = task;
+    employeeTaskList.appendChild(li);
+  });
+}
+
+  </script>
+</body>
+</html>
